@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Code2, Zap } from 'lucide-react';
+import { Code2, Zap } from 'lucide-react';
 
 export default function Header() {
   return (
@@ -26,10 +26,6 @@ export default function Header() {
         <div className="hidden sm:flex items-center px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-xs text-white/70 space-x-2">
           <Zap className="w-3.5 h-3.5 text-violet-400 fill-violet-400/20" />
           <span>Gemini 2.5 Flash Vision</span>
-        </div>
-        <div className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-violet-600/20 to-fuchsia-500/20 border border-violet-500/30 text-xs font-semibold text-violet-300">
-          <Sparkles className="w-3.5 h-3.5 text-fuchsia-400 animate-pulse" />
-          <span>Hackathon Ready</span>
         </div>
       </div>
     </header>
