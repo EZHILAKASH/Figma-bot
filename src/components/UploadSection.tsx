@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Clipboard, Trash2, ArrowRight, Settings, Image as ImageIcon } from 'lucide-react';
+import { Upload, Clipboard, Trash2, ArrowRight, Settings, Image as ImageIcon, LogIn } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 interface UploadSectionProps {
   onImageSelected: (base64Image: string) => void;
@@ -8,6 +9,7 @@ interface UploadSectionProps {
 }
 
 export default function UploadSection({ onImageSelected, onGenerate, isLoading }: UploadSectionProps) {
+  const { user, signInWithGoogle } = useAuth();
   const [dragActive, setDragActive] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedContext, setSelectedContext] = useState<string>('generic');
@@ -95,7 +97,26 @@ export default function UploadSection({ onImageSelected, onGenerate, isLoading }
   };
 
   return (
-    <div className="flex flex-col space-y-6 w-full max-w-2xl mx-auto">
+    <div className="relative flex flex-col space-y-6 w-full max-w-2xl mx-auto p-1">
+      {!user && (
+        <div className="absolute inset-0 bg-[#06070a]/50 backdrop-blur-md border border-white/[0.08] rounded-2xl flex flex-col items-center justify-center p-8 text-center z-20 animate-fade-in">
+          <div className="relative flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-violet-600/30 to-fuchsia-500/30 border border-violet-500/30 text-white shadow-xl shadow-violet-500/10 mb-4 animate-pulse">
+            <Upload className="w-7 h-7 text-violet-400" />
+          </div>
+          <h3 className="text-lg font-bold text-white tracking-tight">Convert Design to React Code</h3>
+          <p className="text-xs text-white/50 max-w-sm mt-1.5 mb-6 leading-relaxed">
+            Instantly translate your design screenshots into responsive, ready-to-use React components. Sign in with Google to get started.
+          </p>
+          <button
+            onClick={signInWithGoogle}
+            className="flex items-center space-x-2 py-3 px-6 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 hover:from-violet-500 hover:to-fuchsia-400 text-xs font-bold text-white shadow-lg shadow-violet-500/20 hover:shadow-violet-500/30 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
+          >
+            <LogIn className="w-4 h-4" />
+            <span>Sign in with Google</span>
+          </button>
+        </div>
+      )}
+
       {/* Upload Zone */}
       <div
         className={`relative flex flex-col items-center justify-center min-h-[320px] rounded-2xl border-2 border-dashed transition-all duration-300 ${

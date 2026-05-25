@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
   title: "FrameFlow | AI-Powered Design-to-React Converter",
@@ -13,7 +14,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased dark">
-      <body className="min-h-full flex flex-col font-sans bg-[#090a0f] text-slate-100">{children}</body>
+      <body className="min-h-full flex flex-col font-sans bg-[#090a0f] text-slate-100">
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   );
 }

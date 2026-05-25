@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
 import Header from '@/components/Header';
+import { useAuth } from '@/context/AuthContext';
 import UploadSection from '@/components/UploadSection';
 import LoadingState from '@/components/LoadingState';
 import PreviewPane from '@/components/PreviewPane';
@@ -11,6 +12,7 @@ import { parseGenerationResponse } from '@/lib/utils';
 import { ArrowLeft, Sparkles, RefreshCw, AlertCircle, Cpu } from 'lucide-react';
 
 export default function Home() {
+  const { user } = useAuth();
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [generatedCode, setGeneratedCode] = useState<string>('');
   const [explanation, setExplanation] = useState<string>('');
@@ -24,6 +26,10 @@ export default function Home() {
 
   const handleGenerate = async (context: string) => {
     if (!uploadedImage) return;
+    if (!user) {
+      setError('You must be signed in to convert designs to React components.');
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
