@@ -35,12 +35,15 @@ export const BASE_PROMPT = `You are an expert React developer and UI/UX engineer
    - Minimum touch-target sizes for interactive links and buttons (at least 40px to 48px).
 
 6. **Output Format (CRITICAL)**:
-   - You must output **ONLY** valid, self-contained, compile-ready React TypeScript code.
-   - Do **NOT** write any markdown introduction, explanation, steps, or post-analysis.
-   - Simply wrap your React component code inside a standard markdown code fence block: \`\`\`tsx ... \`\`\`
-   - Make sure all imports are present at the very top, and the component is fully complete without missing sections or comments like "TODO: Add rest of items".
+   - First, output the valid, self-contained, compile-ready React TypeScript code wrapped inside a standard markdown code fence block: \`\`\`tsx ... \`\`\`
+   - Make sure all imports are present at the very top, and the component is fully complete without missing sections or comments.
+   - Second, immediately below the code block, provide a comprehensive section titled "## Technical Breakdown & Library Usage". Under this section, write a detailed breakdown explaining:
+     - **Layout & Responsive Architecture**: How the flexbox/grid layout and margins/paddings are structured, and how responsiveness (\`md:\`, \`lg:\`) is achieved.
+     - **React Hooks & Interactivity**: The purpose of standard React hooks (\`useState\`, etc.) and how interactive states work.
+     - **Libraries & Icons**: The specific \`lucide-react\` icons imported and their exact visual/UX roles.
+     - **Accessibility (a11y) & Semantic Markup**: The semantic HTML elements used and accessibility standards met.
 
-Now, analyze the provided Figma design screenshot and write the perfect React Tailwind component.`;
+Now, analyze the provided Figma design screenshot, write the perfect React Tailwind component, and provide the technical breakdown.`;
 
 export const LANDING_PAGE_PROMPT = `${BASE_PROMPT}
 

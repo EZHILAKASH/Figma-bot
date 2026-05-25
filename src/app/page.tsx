@@ -7,12 +7,13 @@ import UploadSection from '@/components/UploadSection';
 import LoadingState from '@/components/LoadingState';
 import PreviewPane from '@/components/PreviewPane';
 import CodeEditor from '@/components/CodeEditor';
-import { extractCodeFromResponse } from '@/lib/utils';
+import { parseGenerationResponse } from '@/lib/utils';
 import { ArrowLeft, Sparkles, RefreshCw, AlertCircle, Cpu } from 'lucide-react';
 
 export default function Home() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [generatedCode, setGeneratedCode] = useState<string>('');
+  const [explanation, setExplanation] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,6 +28,7 @@ export default function Home() {
     setIsLoading(true);
     setError(null);
     setGeneratedCode('');
+    setExplanation('');
 
     try {
       const response = await fetch('/api/generate', {
@@ -46,8 +48,9 @@ export default function Home() {
         throw new Error(data.error || 'Failed to connect to design parser server.');
       }
 
-      const extractedCode = extractCodeFromResponse(data.rawOutput);
-      setGeneratedCode(extractedCode);
+      const { code, explanation: generatedExplanation } = parseGenerationResponse(data.rawOutput);
+      setGeneratedCode(code);
+      setExplanation(generatedExplanation);
       
       // Satisfying Hackathon celebration
       triggerConfetti();
@@ -85,6 +88,7 @@ export default function Home() {
   const handleReset = () => {
     setUploadedImage(null);
     setGeneratedCode('');
+    setExplanation('');
     setError(null);
   };
 
@@ -154,7 +158,7 @@ export default function Home() {
 
               {/* Right Code Editor */}
               <div className="h-full min-h-0">
-                <CodeEditor code={generatedCode} onChange={handleCodeChange} />
+                <CodeEditor code={generatedCode} onChange={handleCodeChange} explanation={explanation} />
               </div>
             </div>
           </div>

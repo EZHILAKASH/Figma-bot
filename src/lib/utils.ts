@@ -35,3 +35,32 @@ export function validateGeneratedCode(code: string): boolean {
   const hasReturn = code.includes('return');
   return hasExport && hasReturn;
 }
+
+export function parseGenerationResponse(response: string): { code: string; explanation: string } {
+  const codeMatch = response.match(/```(?:tsx|jsx|html)?\n([\s\S]*?)\n```/);
+  let code = '';
+  let explanation = '';
+
+  if (codeMatch) {
+    code = codeMatch[1].trim();
+    // Explanation is everything after the code block
+    explanation = response.substring(codeMatch.index! + codeMatch[0].length).trim();
+  } else {
+    code = response.trim();
+  }
+
+  // Fallback if explanation is empty: extract pre-code text
+  if (!explanation && codeMatch) {
+    const preText = response.substring(0, codeMatch.index!).trim();
+    if (preText) {
+      explanation = preText;
+    }
+  }
+
+  // If still empty, provide a clean default structure
+  if (!explanation) {
+    explanation = "### Code Explanation\\n\\nThis component was generated using Gemini 2.5 Flash. It utilizes TypeScript, leverages Tailwind CSS styling, incorporates SVG/Lucide icons, and is styled with a responsive design structure.";
+  }
+
+  return { code, explanation };
+}
