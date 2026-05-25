@@ -13,7 +13,7 @@ export default function Header() {
         </div>
         <div>
           <h1 className="text-xl font-bold tracking-tight text-white flex items-center">
-            Figma<span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400 font-extrabold ml-1">ToCode</span>
+            Frame<span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400 font-extrabold ml-1">Flow</span>
             <span className="ml-2.5 px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase rounded-md bg-white/[0.06] text-white/70 border border-white/[0.08]">
               MVP v1.0
             </span>

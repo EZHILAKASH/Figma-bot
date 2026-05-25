@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Figma-to-Code | AI-Powered Design-to-React Converter",
+  title: "FrameFlow | AI-Powered Design-to-React Converter",
   description: "Instantly translate design screenshots into production-ready React components with Tailwind CSS using Gemini 2.5 Flash.",
 };
 
