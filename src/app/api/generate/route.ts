@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { BASE_PROMPT, LANDING_PAGE_PROMPT, DASHBOARD_PROMPT, MOBILE_APP_PROMPT } from '@/lib/prompts';
 
-// Initialize the Anthropic client using the server-side environment variable
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
-});
+// Initialize the Google Generative AI client using the server-side environment variable
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function POST(req: Request) {
   try {
@@ -19,11 +17,11 @@ export async function POST(req: Request) {
     }
 
     // Check if the API key is set
-    if (!process.env.ANTHROPIC_API_KEY) {
+    if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Anthropic API key is not configured. Please add ANTHROPIC_API_KEY to your .env.local file.',
+          error: 'Gemini API key is not configured. Please add GEMINI_API_KEY to your .env.local file.',
         },
         { status: 500 }
       );
@@ -60,44 +58,32 @@ export async function POST(req: Request) {
       if (styleFramework) promptText += `- Styling: ${styleFramework}\n`;
     }
 
-    // Execute vision model generation call
-    const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 4000,
-      temperature: 0.1,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: mediaType as any,
-                data: base64Data,
-              },
-            },
-            {
-              type: 'text',
-              text: promptText,
-            },
-          ],
-        },
-      ],
-    });
+    // Initialize Gemini 2.5 Flash model
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-    const contentText = message.content[0].type === 'text' ? message.content[0].text : '';
+    // Execute content generation call with multimodal input (text prompt + image)
+    const result = await model.generateContent([
+      promptText,
+      {
+        inlineData: {
+          data: base64Data,
+          mimeType: mediaType,
+        },
+      },
+    ]);
+
+    const contentText = result.response.text();
 
     return NextResponse.json({
       success: true,
       rawOutput: contentText,
     });
   } catch (error: any) {
-    console.error('Claude API Generation Error:', error);
+    console.error('Gemini API Generation Error:', error);
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'An error occurred during code generation with Claude.',
+        error: error.message || 'An error occurred during code generation with Gemini.',
       },
       { status: 500 }
     );
