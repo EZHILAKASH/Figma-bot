@@ -2,9 +2,6 @@ import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { BASE_PROMPT, LANDING_PAGE_PROMPT, DASHBOARD_PROMPT, MOBILE_APP_PROMPT } from '@/lib/prompts';
 
-// Initialize the Google Generative AI client using the server-side environment variable
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-
 export async function POST(req: Request) {
   try {
     const { image, context, framework, styleFramework } = await req.json();
@@ -16,8 +13,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check if the API key is set
-    if (!process.env.GEMINI_API_KEY) {
+    // Check if the API key is set dynamically inside the request handler
+    console.log("Safe Loaded Env Keys:", Object.keys(process.env).filter(k => k.toUpperCase().includes("KEY") || k.toUpperCase().includes("GEMINI")));
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
       return NextResponse.json(
         {
           success: false,
@@ -26,6 +25,9 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
+
+    // Initialize the Google Generative AI client dynamically
+    const genAI = new GoogleGenerativeAI(apiKey);
 
     // Parse base64 image data and determine media type
     let mediaType = 'image/jpeg';

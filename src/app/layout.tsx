@@ -1,20 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Figma-to-Code | AI-Powered Design-to-React Converter",
-  description: "Instantly translate design screenshots into production-ready React components with Tailwind CSS using Claude 3.5 Sonnet Vision.",
+  description: "Instantly translate design screenshots into production-ready React components with Tailwind CSS using Gemini 2.5 Flash.",
 };
 
 export default function RootLayout({
@@ -23,11 +12,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="en" className="h-full antialiased dark">
+      <body className="min-h-full flex flex-col font-sans bg-[#090a0f] text-slate-100">{children}</body>
     </html>
   );
 }
