@@ -30,14 +30,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!!auth);
   const [diagnosticError, setDiagnosticError] = useState<DiagnosticError | null>(null);
 
   useEffect(() => {
-    if (!auth) {
-      setLoading(false);
-      return;
-    }
+    if (!auth) return;
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       setLoading(false);
@@ -45,9 +42,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const getDiagnosticDetails = (err: any): DiagnosticError => {
-    const code = err?.code || '';
-    const message = err?.message || '';
+  const getDiagnosticDetails = (err: unknown): DiagnosticError => {
+    const errorObj = err as { code?: string; message?: string } | null;
+    const code = errorObj?.code || '';
+    const message = errorObj?.message || '';
 
     if (code === 'auth/unauthorized-domain') {
       return {
@@ -120,10 +118,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     provider.setCustomParameters({ prompt: 'select_account' });
     try {
       await signInWithPopup(auth, provider);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error signing in with Google:", error);
+      const errObj = error as { code?: string } | null;
       // Suppress showing diagnostic modal if the user simply closed the popup
-      if (error?.code !== 'auth/popup-closed-by-user') {
+      if (errObj?.code !== 'auth/popup-closed-by-user') {
         const diagErr = getDiagnosticDetails(error);
         setDiagnosticError(diagErr);
       }

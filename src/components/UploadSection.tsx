@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Clipboard, Trash2, ArrowRight, Settings, Image as ImageIcon, LogIn } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Upload, Clipboard, Trash2, ArrowRight, Settings, LogIn } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 interface UploadSectionProps {
@@ -14,6 +14,28 @@ export default function UploadSection({ onImageSelected, onGenerate, isLoading }
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedContext, setSelectedContext] = useState<string>('generic');
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const processFile = useCallback((file: File) => {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Only image files are supported (PNG, JPEG, WebP, etc.)');
+      return;
+    }
+
+    // Limit to 20MB
+    if (file.size > 20 * 1024 * 1024) {
+      alert('Maximum file size is 20MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onloadend = () => {
+      const base64data = reader.result as string;
+      setImagePreview(base64data);
+      onImageSelected(base64data);
+    };
+  }, [onImageSelected]);
 
   // Paste handler for quick clipboard support
   useEffect(() => {
@@ -34,7 +56,7 @@ export default function UploadSection({ onImageSelected, onGenerate, isLoading }
 
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
-  }, [imagePreview, isLoading]);
+  }, [imagePreview, isLoading, processFile]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -50,7 +72,7 @@ export default function UploadSection({ onImageSelected, onGenerate, isLoading }
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-
+ 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       processFile(e.dataTransfer.files[0]);
     }
@@ -60,28 +82,6 @@ export default function UploadSection({ onImageSelected, onGenerate, isLoading }
     if (e.target.files && e.target.files[0]) {
       processFile(e.target.files[0]);
     }
-  };
-
-  const processFile = (file: File) => {
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert('Only image files are supported (PNG, JPEG, WebP, etc.)');
-      return;
-    }
-
-    // Limit to 20MB
-    if (file.size > 20 * 1024 * 1024) {
-      alert('Maximum file size is 20MB');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onloadend = () => {
-      const base64data = reader.result as string;
-      setImagePreview(base64data);
-      onImageSelected(base64data);
-    };
   };
 
   const triggerFileInput = () => {

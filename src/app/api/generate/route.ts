@@ -80,12 +80,13 @@ export async function POST(req: Request) {
       success: true,
       rawOutput: contentText,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Gemini API Generation Error:', error);
+    const errObj = error as Error | null;
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'An error occurred during code generation with Gemini.',
+        error: errObj?.message || 'An error occurred during code generation with Gemini.',
       },
       { status: 500 }
     );

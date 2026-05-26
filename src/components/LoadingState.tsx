@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 
+const steps = [
+  'Transmitting design screenshot...',
+  'Analyzing spatial layouts & grids...',
+  'Extracting color palettes & typography tokens...',
+  'Structuring semantically accessible React tree...',
+  'Generating responsive Tailwind classes...',
+  'Claude is writing clean component code...',
+  'Adding mock data variables...',
+  'Finalizing dynamic preview compilation...',
+];
+
 export default function LoadingState() {
   const [currentStep, setCurrentStep] = useState(0);
-
-  const steps = [
-    'Transmitting design screenshot...',
-    'Analyzing spatial layouts & grids...',
-    'Extracting color palettes & typography tokens...',
-    'Structuring semantically accessible React tree...',
-    'Generating responsive Tailwind classes...',
-    'Claude is writing clean component code...',
-    'Adding mock data variables...',
-    'Finalizing dynamic preview compilation...',
-  ];
 
   useEffect(() => {
     const interval = setInterval(() => {

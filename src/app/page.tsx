@@ -9,7 +9,7 @@ import LoadingState from '@/components/LoadingState';
 import PreviewPane from '@/components/PreviewPane';
 import CodeEditor from '@/components/CodeEditor';
 import { parseGenerationResponse } from '@/lib/utils';
-import { ArrowLeft, Sparkles, RefreshCw, AlertCircle, Cpu } from 'lucide-react';
+import { ArrowLeft, Sparkles, AlertCircle } from 'lucide-react';
 
 export default function Home() {
   const { user } = useAuth();
@@ -60,9 +60,10 @@ export default function Home() {
       
       // Satisfying Hackathon celebration
       triggerConfetti();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message || 'An error occurred while generating your component. Please try again.');
+      const errObj = err as Error | null;
+      setError(errObj?.message || 'An error occurred while generating your component. Please try again.');
     } finally {
       setIsLoading(false);
     }

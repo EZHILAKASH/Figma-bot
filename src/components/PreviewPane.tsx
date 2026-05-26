@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, RotateCw, Monitor, Tablet, Smartphone, AlertCircle } from 'lucide-react';
+import { RotateCw, Monitor, Tablet, Smartphone, AlertCircle } from 'lucide-react';
 
 interface PreviewPaneProps {
   code: string;
@@ -14,9 +14,14 @@ export default function PreviewPane({ code }: PreviewPaneProps) {
 
   // Debounced code compiler
   const [debouncedCode, setDebouncedCode] = useState(code);
+  const [prevCode, setPrevCode] = useState(code);
+
+  if (code !== prevCode) {
+    setPrevCode(code);
+    setStatus('compiling');
+  }
 
   useEffect(() => {
-    setStatus('compiling');
     const handler = setTimeout(() => {
       setDebouncedCode(code);
     }, 600);
