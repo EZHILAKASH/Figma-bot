@@ -1,26 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Code2, Zap, LogIn, LogOut, User, ChevronDown, Loader2 } from 'lucide-react';
+import { Code2, LogIn, LogOut, User, ChevronDown, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
-interface HeaderProps {
-  selectedModel: string;
-  onModelChange: (model: string) => void;
-}
-
-const models = [
-  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', desc: 'Fast, responsive generation (Default)', iconColor: 'text-violet-400 fill-violet-400/10' },
-  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', desc: 'High-intelligence reasoning', iconColor: 'text-fuchsia-400 fill-fuchsia-400/10' },
-  { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', desc: 'Legacy reasoning fallback', iconColor: 'text-pink-400 fill-pink-400/10' },
-  { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', desc: 'Premium pixel-perfect layout', iconColor: 'text-orange-400 fill-orange-400/10' },
-  { id: 'claude-3-5-haiku', name: 'Claude 3.5 Haiku', desc: 'Fast & structured component code', iconColor: 'text-amber-400 fill-amber-400/10' },
-];
-
-export default function Header({ selectedModel, onModelChange }: HeaderProps) {
+export default function Header() {
   const { user, loading, signInWithGoogle, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/[0.08] bg-black/40 backdrop-blur-xl px-6 py-4 flex items-center justify-between">
@@ -43,49 +29,6 @@ export default function Header({ selectedModel, onModelChange }: HeaderProps) {
       </div>
       
       <div className="flex items-center space-x-4">
-        {/* Model Selector Dropdown */}
-        <div className="relative z-50">
-          <button
-            onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
-            className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] text-xs font-semibold text-white/80 hover:text-white transition-all select-none cursor-pointer active:scale-98"
-          >
-            <Zap className={`w-3.5 h-3.5 ${models.find(m => m.id === selectedModel)?.iconColor}`} />
-            <span>{models.find(m => m.id === selectedModel)?.name}</span>
-            <ChevronDown className={`w-3 h-3 opacity-60 transition-transform duration-200 ${modelDropdownOpen ? 'rotate-180' : ''}`} />
-          </button>
-
-          {modelDropdownOpen && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setModelDropdownOpen(false)} />
-              <div className="absolute right-0 mt-2 w-64 origin-top-right rounded-xl border border-white/[0.08] bg-[#0c0d14]/95 backdrop-blur-xl p-1.5 shadow-xl shadow-black/50 z-50 animate-fade-in">
-                <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider px-3 py-2 border-b border-white/[0.04] mb-1 select-none">
-                  Select AI Agent / Model
-                </p>
-                {models.map((model) => (
-                  <button
-                    key={model.id}
-                    onClick={() => {
-                      onModelChange(model.id);
-                      setModelDropdownOpen(false);
-                    }}
-                    className={`flex w-full items-start space-x-2.5 px-3 py-2 rounded-lg text-left text-xs transition-colors cursor-pointer select-none ${
-                      selectedModel === model.id
-                        ? 'bg-violet-600/10 text-violet-300 font-bold'
-                        : 'text-white/60 hover:bg-white/[0.03] hover:text-white/90'
-                    }`}
-                  >
-                    <Zap className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${model.iconColor}`} />
-                    <div className="space-y-0.5">
-                      <span className="block font-bold">{model.name}</span>
-                      <span className="block text-[9px] opacity-60 leading-relaxed font-normal">{model.desc}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-
         {loading ? (
           <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-xs text-white/40">
             <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-400" />

@@ -23,13 +23,14 @@ export async function POST(req: Request) {
     const activeCode = code || '';
 
     // System instruction defining chatbot's role, rules, and presenting the sandbox code context
-    const systemPrompt = `You are FrameFlow's world-class AI design assistant, an expert UI/UX developer, and React/Tailwind consultant.
-Your role is to help the user clear UI design doubts, build/write functional React component code, and suggest the simplest, cleanest layout strategies to achieve their visual goals.
+    const systemPrompt = `You are FrameFlow's world-class AI design assistant, an expert UI/UX developer, and multi-language compiler consultant.
+Your role is to help the user clear UI design doubts, build/write functional code, translate sandbox styles into any requested programming language, and suggest the simplest layout strategies to achieve visual goals.
 
 ## Core Directives & Styling Philosophy:
-1. **The Simplest Way first**: Always suggest and highlight the absolute *simplest* way to achieve a layout or alignment goal. Avoid unnecessary wrappers, bloated classes, or over-engineered CSS. Explain *why* a specific Tailwind class (e.g. "flex", "grid", "gap-4", "items-center") is the cleanest approach.
-2. **Design Doubts Clearing**: Provide clear, educational explanations about visual layout decisions, typography scales, accessibility rules (like WCAG contrast levels), color theory, and mobile design safe zones.
-3. **Write/Enhance Sandbox Code**: If the user wants to add elements, modify styling, or build components, provide the completed, functional React code.
+1. **The Simplest Way first**: Always suggest and highlight the absolute *simplest* way to achieve a layout or alignment goal. Avoid unnecessary wrappers, bloated classes, or over-engineered CSS. Explain *why* a specific code element (e.g. "flex", "grid" or platform-equivalents) is the cleanest approach.
+2. **Cross-Language Code Conversion**: If the user asks to get the code or translate the screen into **any computer programming language or framework** (such as React, Vue SFC, Svelte, Angular, Vanilla HTML/CSS, Flutter, React Native, iOS SwiftUI, Android Kotlin/Jetpack Compose, Swift, etc.), immediately convert the active sandbox component code into high-fidelity, complete, compile-ready code in that requested language!
+3. **Design Doubts Clearing**: Provide clear, educational explanations about visual layout decisions, typography scales, accessibility rules (like WCAG contrast levels), color theory, and mobile design safe zones.
+4. **Write/Enhance Sandbox Code**: By default, code additions or sandbox tweaks should be written in React TypeScript & Tailwind CSS. But if requested otherwise, write in the user's preferred language.
 
 ## Active Sandbox Context:
 The user is currently viewing/editing a React component in their visual sandbox. Here is the exact component code currently loaded:
@@ -104,7 +105,13 @@ ${activeCode}
       const genAI = new GoogleGenerativeAI(apiKey);
       const geminiModelsToTry = [finalModel];
       
-      if (finalModel === 'gemini-2.5-flash') {
+      if (finalModel === 'gemini-3.5-flash') {
+        geminiModelsToTry.push('gemini-3.1-pro', 'gemini-2.5-flash', 'gemini-1.5-flash');
+      } else if (finalModel === 'gemini-3.1-pro') {
+        geminiModelsToTry.push('gemini-2.5-pro', 'gemini-1.5-pro');
+      } else if (finalModel === 'gemini-3.1-flash-lite') {
+        geminiModelsToTry.push('gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-1.5-flash');
+      } else if (finalModel === 'gemini-2.5-flash') {
         geminiModelsToTry.push('gemini-1.5-flash', 'gemini-2.5-pro');
       } else if (finalModel === 'gemini-2.5-pro') {
         geminiModelsToTry.push('gemini-1.5-pro', 'gemini-2.5-flash');

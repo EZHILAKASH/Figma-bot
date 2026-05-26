@@ -5,11 +5,11 @@ const steps = [
   'Transmitting design screenshot...',
   'Analyzing spatial layouts & grids...',
   'Extracting color palettes & typography tokens...',
-  'Structuring semantically accessible React tree...',
-  'Generating responsive Tailwind classes...',
-  'Claude is writing clean component code...',
-  'Adding mock data variables...',
-  'Finalizing dynamic preview compilation...',
+  'Structuring semantic layout elements...',
+  'Injecting target platform design systems...',
+  'Writing clean high-fidelity component code...',
+  'Adding realistic mockup variables...',
+  'Finalizing compilation & preview sandbox...',
 ];
 
 export default function LoadingState() {

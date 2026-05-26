@@ -7,6 +7,7 @@ interface CodeEditorProps {
   onChange: (value: string) => void;
   explanation?: string;
   selectedModel?: string;
+  language?: string;
 }
 
 const promptChips = [
@@ -59,9 +60,24 @@ function ChatCodeBlock({ code, language }: { code: string; language: string }) {
   );
 }
 
-export default function CodeEditor({ code, onChange, explanation, selectedModel }: CodeEditorProps) {
+export default function CodeEditor({ code, onChange, explanation, selectedModel, language }: CodeEditorProps) {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'code' | 'explanation' | 'assistant'>('code');
+
+  const getMonacoLanguage = () => {
+    if (!language) return 'typescript';
+    if (language === 'react') return 'typescript';
+    if (language === 'vue' || language === 'svelte' || language === 'htmlcss') return 'html';
+    if (language.startsWith('python')) return 'python';
+    if (language === 'kotlin') return 'kotlin';
+    if (language === 'flutter') return 'typescript';
+    if (language === 'swiftui') return 'swift';
+    if (language === 'rust') return 'rust';
+    if (language === 'java') return 'java';
+    if (language === 'csharp') return 'xml';
+    if (language === 'cpp') return 'cpp';
+    return 'typescript';
+  };
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([
     {
       role: 'assistant',
@@ -313,7 +329,22 @@ I have full, live context of the React component rendering on your screen. Here 
             }`}
           >
             <FileCode className="w-3.5 h-3.5" />
-            <span>React Code</span>
+            <span>
+              {language === 'react' ? 'React Code'
+                : language === 'vue' ? 'Vue Code'
+                : language === 'svelte' ? 'Svelte Code'
+                : language === 'htmlcss' ? 'HTML/CSS'
+                : language === 'python_tkinter' ? 'Python Tkinter'
+                : language === 'python_pyqt' ? 'Python PyQt5'
+                : language === 'flutter' ? 'Flutter Code'
+                : language === 'swiftui' ? 'SwiftUI Code'
+                : language === 'kotlin' ? 'Kotlin Compose'
+                : language === 'rust' ? 'Rust Code'
+                : language === 'java' ? 'Java Swing'
+                : language === 'csharp' ? 'C# WPF XAML'
+                : language === 'cpp' ? 'C++ Qt Code'
+                : 'Generated Code'}
+            </span>
           </button>
           
           {explanation && (
@@ -383,8 +414,8 @@ I have full, live context of the React component rendering on your screen. Here 
         <div className="flex-1 min-h-[350px] relative bg-[#1e1e1e]">
           <Editor
             height="100%"
-            defaultLanguage="typescript"
-            language="typescript"
+            defaultLanguage={getMonacoLanguage()}
+            language={getMonacoLanguage()}
             theme="vs-dark"
             value={code}
             onChange={(val) => onChange(val || '')}

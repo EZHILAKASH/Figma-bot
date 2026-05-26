@@ -15,6 +15,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInAsGuest: () => void;
   logout: () => Promise<void>;
 }
 
@@ -140,6 +141,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInAsGuest = () => {
+    const mockUser: any = {
+      uid: 'developer-guest-uid',
+      displayName: 'Guest Developer',
+      email: 'guest@frameflow.dev',
+      photoURL: null
+    };
+    setUser(mockUser);
+    setDiagnosticError(null);
+  };
+
   const getSolutionIcon = (type: string) => {
     switch (type) {
       case 'domain':
@@ -154,7 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInAsGuest, logout }}>
       {children}
 
       {diagnosticError && (
@@ -231,13 +243,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               </ol>
             </div>
 
-            {/* Dismiss CTA */}
-            <button
-              onClick={() => setDiagnosticError(null)}
-              className="w-full flex items-center justify-center py-2.5 px-4 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-bold text-white/80 hover:text-white transition-all cursor-pointer active:scale-98"
-            >
-              <span>Dismiss Diagnostics</span>
-            </button>
+            {/* Dismiss / Bypass CTA Actions */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full mt-4">
+              <button
+                onClick={signInAsGuest}
+                className="w-full sm:flex-1 flex items-center justify-center py-2.5 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 hover:from-violet-500 hover:to-fuchsia-400 border border-violet-500/30 text-xs font-bold text-white shadow-lg shadow-violet-500/20 transition-all cursor-pointer active:scale-98"
+              >
+                <span>Bypass & Proceed as Guest</span>
+              </button>
+              <button
+                onClick={() => setDiagnosticError(null)}
+                className="w-full sm:flex-1 flex items-center justify-center py-2.5 px-4 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-bold text-white/85 hover:text-white transition-all cursor-pointer active:scale-98"
+              >
+                <span>Dismiss Diagnostics</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

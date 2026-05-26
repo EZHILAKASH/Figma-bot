@@ -14,8 +14,8 @@ export function cn(...inputs: (string | undefined | null | boolean | Record<stri
 }
 
 export function extractCodeFromResponse(response: string): string {
-  // Claude returns code in ```tsx ... ``` format or standard ``` ... ```
-  const match = response.match(/```(?:tsx|jsx|html)?\n([\s\S]*?)\n```/);
+  // Matches any code block format (tsx, python, dart, swift, etc.)
+  const match = response.match(/```(?:\w+)?\n([\s\S]*?)\n```/);
   if (match && match[1]) {
     return match[1].trim();
   }
@@ -37,7 +37,8 @@ export function validateGeneratedCode(code: string): boolean {
 }
 
 export function parseGenerationResponse(response: string): { code: string; explanation: string } {
-  const codeMatch = response.match(/```(?:tsx|jsx|html)?\n([\s\S]*?)\n```/);
+  // Matches any code block format (tsx, python, dart, swift, etc.)
+  const codeMatch = response.match(/```(?:\w+)?\n([\s\S]*?)\n```/);
   let code = '';
   let explanation = '';
 
