@@ -133,7 +133,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const finalModel = requestedModel || 'gemini-2.5-flash';
+    const finalModel = requestedModel || 'gemini-2.0-flash';
     let contentText = '';
 
     // Parse base64 image data and determine media type (if image is present)
@@ -258,16 +258,17 @@ export async function POST(req: Request) {
 
       // List of fallback models to try if primary model fails with 503
       const geminiModelsToTry = [finalModel];
-      if (finalModel === 'gemini-3.5-flash') {
-        geminiModelsToTry.push('gemini-3.1-pro', 'gemini-2.5-flash', 'gemini-1.5-flash');
-      } else if (finalModel === 'gemini-3.1-pro') {
-        geminiModelsToTry.push('gemini-2.5-pro', 'gemini-1.5-pro');
-      } else if (finalModel === 'gemini-3.1-flash-lite') {
-        geminiModelsToTry.push('gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-1.5-flash');
-      } else if (finalModel === 'gemini-2.5-flash') {
-        geminiModelsToTry.push('gemini-1.5-flash', 'gemini-2.5-pro');
-      } else if (finalModel === 'gemini-2.5-pro') {
-        geminiModelsToTry.push('gemini-1.5-pro', 'gemini-2.5-flash');
+      if (finalModel === 'gemini-2.0-flash') {
+        geminiModelsToTry.push('gemini-1.5-flash', 'gemini-2.0-flash-lite-preview-02-05', 'gemini-1.5-pro');
+      } else if (finalModel === 'gemini-2.0-flash-lite-preview-02-05') {
+        geminiModelsToTry.push('gemini-2.0-flash', 'gemini-1.5-flash');
+      } else if (finalModel === 'gemini-1.5-flash') {
+        geminiModelsToTry.push('gemini-2.0-flash', 'gemini-1.5-pro');
+      } else if (finalModel === 'gemini-1.5-pro') {
+        geminiModelsToTry.push('gemini-2.0-flash', 'gemini-1.5-flash');
+      } else {
+        // Safe standard fallback stack for any newer or custom selected models
+        geminiModelsToTry.push('gemini-2.0-flash', 'gemini-1.5-flash');
       }
 
       let geminiError: any = null;
@@ -309,11 +310,24 @@ export async function POST(req: Request) {
     });
   } catch (error: unknown) {
     console.error('API Generation Error:', error);
-    const errObj = error as Error | null;
+    let errorMessage = 'An error occurred during code generation with the selected model. Please try again.';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (error && typeof error === 'object') {
+      errorMessage = (error as any).message || JSON.stringify(error);
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+    
+    // Make key expired errors user-friendly
+    if (errorMessage.includes('API key expired') || errorMessage.includes('API_KEY_INVALID')) {
+      errorMessage = 'Your Google Gemini API Key is expired or invalid. Please update the GEMINI_API_KEY in your .env.local file to resume generation.';
+    }
+
     return NextResponse.json(
       {
         success: false,
-        error: errObj?.message || 'An error occurred during code generation with the selected model. Please try again.',
+        error: errorMessage,
       },
       { status: 500 }
     );

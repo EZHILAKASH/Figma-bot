@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       activeMessages.shift();
     }
 
-    const finalModel = requestedModel || 'gemini-2.5-flash';
+    const finalModel = requestedModel || 'gemini-2.0-flash';
     const activeCode = code || '';
 
     // System instruction defining chatbot's role, rules, and presenting the sandbox code context
@@ -105,16 +105,17 @@ ${activeCode}
       const genAI = new GoogleGenerativeAI(apiKey);
       const geminiModelsToTry = [finalModel];
       
-      if (finalModel === 'gemini-3.5-flash') {
-        geminiModelsToTry.push('gemini-3.1-pro', 'gemini-2.5-flash', 'gemini-1.5-flash');
-      } else if (finalModel === 'gemini-3.1-pro') {
-        geminiModelsToTry.push('gemini-2.5-pro', 'gemini-1.5-pro');
-      } else if (finalModel === 'gemini-3.1-flash-lite') {
-        geminiModelsToTry.push('gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-1.5-flash');
-      } else if (finalModel === 'gemini-2.5-flash') {
-        geminiModelsToTry.push('gemini-1.5-flash', 'gemini-2.5-pro');
-      } else if (finalModel === 'gemini-2.5-pro') {
-        geminiModelsToTry.push('gemini-1.5-pro', 'gemini-2.5-flash');
+      if (finalModel === 'gemini-2.0-flash') {
+        geminiModelsToTry.push('gemini-1.5-flash', 'gemini-2.0-flash-lite-preview-02-05', 'gemini-1.5-pro');
+      } else if (finalModel === 'gemini-2.0-flash-lite-preview-02-05') {
+        geminiModelsToTry.push('gemini-2.0-flash', 'gemini-1.5-flash');
+      } else if (finalModel === 'gemini-1.5-flash') {
+        geminiModelsToTry.push('gemini-2.0-flash', 'gemini-1.5-pro');
+      } else if (finalModel === 'gemini-1.5-pro') {
+        geminiModelsToTry.push('gemini-2.0-flash', 'gemini-1.5-flash');
+      } else {
+        // Safe standard fallback stack for any newer or custom selected models
+        geminiModelsToTry.push('gemini-2.0-flash', 'gemini-1.5-flash');
       }
 
       let geminiError: any = null;
@@ -158,11 +159,24 @@ ${activeCode}
     });
   } catch (error: unknown) {
     console.error('[Chat API] Fatal Error:', error);
-    const errObj = error as Error | null;
+    let errorMessage = 'An error occurred while connecting to the AI model. Please try again.';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (error && typeof error === 'object') {
+      errorMessage = (error as any).message || JSON.stringify(error);
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+
+    // Make key expired errors user-friendly
+    if (errorMessage.includes('API key expired') || errorMessage.includes('API_KEY_INVALID')) {
+      errorMessage = 'Your Google Gemini API Key is expired or invalid. Please update the GEMINI_API_KEY in your .env.local file to resume chat.';
+    }
+
     return NextResponse.json(
       {
         success: false,
-        error: errObj?.message || 'An error occurred while connecting to the AI model. Please try again.',
+        error: errorMessage,
       },
       { status: 500 }
     );

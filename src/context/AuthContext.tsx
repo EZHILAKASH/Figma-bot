@@ -48,20 +48,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsSimulatingAuth(false);
     setDiagnosticError(null);
   };
-
-  useEffect(() => {
-    if (!auth) return;
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
-
   const getDiagnosticDetails = (err: unknown): DiagnosticError => {
     const errorObj = err as { code?: string; message?: string } | null;
     const code = errorObj?.code || '';
     const message = errorObj?.message || '';
+
+    const currentProjectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'frame-flow-e65f1';
 
     if (code === 'auth/unauthorized-domain') {
       return {
@@ -71,9 +63,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         solutionType: 'domain',
         steps: [
           'Go to the Firebase Console (https://console.firebase.google.com/)',
-          'Select your project: "frame-flow-667df"',
+          `Select your project: "${currentProjectId}"`,
           'Navigate to Authentication > Settings > Authorized domains',
-          'Click "Add domain" and enter: figma-bot-five.vercel.app',
+          'Click "Add domain" and enter: figma-bot-five.vercel.app (and localhost if not whitelisted)',
           'Save your changes. The authentication popup will start working immediately without any code changes or redeployments!'
         ]
       };
@@ -87,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         solutionType: 'provider',
         steps: [
           'Go to the Firebase Console (https://console.firebase.google.com/)',
-          'Select your project: "frame-flow-667df"',
+          `Select your project: "${currentProjectId}"`,
           'Navigate to Authentication > Sign-in method',
           'Click "Add new provider" (or edit Google under Sign-in providers)',
           'Toggle the Enable switch, configure a support email, and click Save!'
@@ -128,6 +120,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   };
 
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason;
+      const message = String(reason?.message || reason || '');
+      const code = String(reason?.code || '');
+
+      if (code.indexOf('auth/') === 0 || message.indexOf('auth/') !== -1) {
+        console.warn("Gracefully intercepted unhandled Firebase rejection:", reason);
+        event.preventDefault();
+        const diagErr = getDiagnosticDetails(reason);
+        setDiagnosticError(diagErr);
+      }
+    };
+
+    const handleGlobalError = (event: ErrorEvent) => {
+      const error = event.error;
+      const message = String(error?.message || event.message || '');
+      const code = String(error?.code || '');
+
+      if (code.indexOf('auth/') === 0 || message.indexOf('auth/') !== -1) {
+        console.warn("Gracefully intercepted global Firebase error:", error);
+        event.preventDefault();
+        const diagErr = getDiagnosticDetails(error || event);
+        setDiagnosticError(diagErr);
+      }
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    window.addEventListener('error', handleGlobalError);
+
+    if (!auth) {
+      return () => {
+        window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+        window.removeEventListener('error', handleGlobalError);
+      };
+    }
+
+    const unsubscribe = onAuthStateChanged(
+      auth, 
+      (firebaseUser) => {
+        setUser(firebaseUser);
+        setLoading(false);
+      },
+      (error) => {
+        console.warn("Background Firebase auth verification intercepted:", error.message);
+        setLoading(false);
+        const diagErr = getDiagnosticDetails(error);
+        setDiagnosticError(diagErr);
+      }
+    );
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      window.removeEventListener('error', handleGlobalError);
+    };
+  }, []);
+
   const signInWithGoogle = async () => {
     if (!isFirebaseConfigured || !auth) {
       console.warn("Firebase config missing or invalid. Falling back to simulated Google authentication.");
@@ -141,24 +191,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signInWithPopup(auth, provider);
     } catch (error: unknown) {
       console.error("Error signing in with Google:", error);
-      const errObj = error as { code?: string } | null;
+      const errObj = error as { code?: string; message?: string } | null;
       const code = errObj?.code || '';
+      const message = errObj?.message || '';
       
-      if (
-        code === 'auth/invalid-api-key' || 
-        code === 'auth/invalid-credential' || 
-        code.indexOf('api-key-not-valid') !== -1
-      ) {
-        console.warn("Invalid Firebase API Key. Gracefully falling back to simulated Google authentication.");
-        await simulateGoogleSignIn();
-        return;
-      }
+      const codeStr = String(code).toLowerCase();
+      const messageStr = String(message).toLowerCase();
+      
+      const isUserCancelled = 
+        codeStr === 'auth/popup-closed-by-user' || 
+        messageStr.indexOf('popup-closed-by-user') !== -1;
 
-      if (errObj?.code !== 'auth/popup-closed-by-user') {
+      if (!isUserCancelled) {
         const diagErr = getDiagnosticDetails(error);
         setDiagnosticError(diagErr);
+        return;
       }
-      throw error;
+      
+      console.log("Authentication cancelled by user.");
     }
   };
 

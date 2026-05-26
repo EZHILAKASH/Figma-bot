@@ -18,7 +18,7 @@ export default function Home() {
   const [explanation, setExplanation] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState<string>('gemini-3.5-flash');
+  const [selectedModel, setSelectedModel] = useState<string>('gemini-2.0-flash');
   const [generatedLanguage, setGeneratedLanguage] = useState<string>('react');
   const [currentContext, setCurrentContext] = useState<string>('generic');
   const [codeCache, setCodeCache] = useState<Record<string, { code: string; explanation: string }>>({});
@@ -65,7 +65,12 @@ export default function Home() {
         }),
       });
 
-      const data = await response.json();
+      let data: any;
+      try {
+        data = await response.json();
+      } catch (jsonErr) {
+        throw new Error(`Server returned an invalid response (Status ${response.status}). Please check your server log.`);
+      }
 
       if (!response.ok || !data.success) {
         throw new Error(data.error || 'Failed to connect to design parser server.');

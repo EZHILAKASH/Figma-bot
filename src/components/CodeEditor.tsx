@@ -150,7 +150,13 @@ I have full, live context of the React component rendering on your screen. Here 
         }),
       });
 
-      const data = await response.json();
+      let data: any;
+      try {
+        data = await response.json();
+      } catch (jsonErr) {
+        throw new Error(`Chat server returned an invalid response (Status ${response.status}).`);
+      }
+
       if (!response.ok || !data.success) {
         throw new Error(data.error || 'Failed to connect to design chatbot server.');
       }
