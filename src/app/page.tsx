@@ -167,7 +167,12 @@ export default function Home() {
 
               {/* Right Code Editor */}
               <div className="h-full min-h-0">
-                <CodeEditor code={generatedCode} onChange={handleCodeChange} explanation={explanation} />
+                <CodeEditor 
+                  code={generatedCode} 
+                  onChange={handleCodeChange} 
+                  explanation={explanation} 
+                  selectedModel={selectedModel}
+                />
               </div>
             </div>
           </div>
