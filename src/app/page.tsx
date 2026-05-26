@@ -18,6 +18,7 @@ export default function Home() {
   const [explanation, setExplanation] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState<string>('gemini-2.5-flash');
 
   const handleImageSelected = (base64Image: string) => {
     setUploadedImage(base64Image);
@@ -45,6 +46,7 @@ export default function Home() {
         body: JSON.stringify({
           image: uploadedImage,
           context: context,
+          model: selectedModel,
         }),
       });
 
@@ -109,7 +111,7 @@ export default function Home() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.05),transparent_50%)] pointer-events-none" />
 
       {/* Main Header */}
-      <Header />
+      <Header selectedModel={selectedModel} onModelChange={setSelectedModel} />
 
       <main className="flex-1 flex flex-col p-6 max-w-7xl mx-auto w-full relative z-10">
         {!generatedCode ? (
