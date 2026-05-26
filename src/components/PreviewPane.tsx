@@ -147,9 +147,12 @@ export default function PreviewPane({ code }: PreviewPaneProps) {
             if (moduleName === 'react') return window.React;
             if (moduleName === 'react-dom') return window.ReactDOM;
             if (moduleName === 'lucide-react') {
-              // Return Proxy Mockup for Lucide Icons
-              return new Proxy({}, {
+              // Return Proxy Mockup for Lucide Icons that supports ES Module interop
+              const lucideProxy = new Proxy({}, {
                 get: (target, name) => {
+                  if (name === '__esModule') return true;
+                  if (name === 'default') return lucideProxy;
+                  
                   return (props) => {
                     const size = props.size || 20;
                     const strokeWidth = props.strokeWidth || 2;
@@ -169,7 +172,7 @@ export default function PreviewPane({ code }: PreviewPaneProps) {
                         strokeWidth: strokeWidth,
                         strokeLinecap: 'round',
                         strokeLinejoin: 'round',
-                        className: 'lucide lucide-' + name.toLowerCase() + ' ' + className,
+                        className: 'lucide lucide-' + (typeof name === 'string' ? name.toLowerCase() : '') + ' ' + className,
                         ...props
                       },
                       React.createElement('circle', { cx: 12, cy: 12, r: 10 }),
@@ -179,6 +182,7 @@ export default function PreviewPane({ code }: PreviewPaneProps) {
                   };
                 }
               });
+              return lucideProxy;
             }
             return {};
           };
