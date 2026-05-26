@@ -65,3 +65,23 @@ export function parseGenerationResponse(response: string): { code: string; expla
 
   return { code, explanation };
 }
+
+export function getApiUrl(path: string): string {
+  // If NEXT_PUBLIC_API_URL environment variable is provided, use it
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return `${process.env.NEXT_PUBLIC_API_URL}${path}`;
+  }
+  
+  // Check if running on native mobile client (Capacitor)
+  if (typeof window !== 'undefined') {
+    const origin = window.location.origin;
+    if (origin.startsWith('capacitor://') || (origin.includes('localhost') && !origin.includes('localhost:3000'))) {
+      // Fallback to the production deployed URL for API endpoints
+      return `https://figma-bot-five.vercel.app${path}`;
+    }
+  }
+  
+  // Default to relative path for local web and vercel web deployment
+  return path;
+}
+

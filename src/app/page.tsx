@@ -8,7 +8,7 @@ import UploadSection from '@/components/UploadSection';
 import LoadingState from '@/components/LoadingState';
 import PreviewPane from '@/components/PreviewPane';
 import CodeEditor from '@/components/CodeEditor';
-import { parseGenerationResponse } from '@/lib/utils';
+import { parseGenerationResponse, getApiUrl } from '@/lib/utils';
 import { ArrowLeft, Sparkles, AlertCircle } from 'lucide-react';
 
 export default function Home() {
@@ -51,7 +51,7 @@ export default function Home() {
     setExplanation('');
 
     try {
-      const response = await fetch('/api/generate', {
+      const response = await fetch(getApiUrl('/api/generate'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

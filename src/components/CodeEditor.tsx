@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { Copy, Check, Download, RefreshCw, FileCode, BookOpen, Compass, MessageSquare, Send, Sparkles, AlertCircle } from 'lucide-react';
+import { getApiUrl } from '@/lib/utils';
 
 interface CodeEditorProps {
   code: string;
@@ -138,7 +139,7 @@ I have full, live context of the React component rendering on your screen. Here 
     setChatError(null);
 
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch(getApiUrl('/api/chat'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

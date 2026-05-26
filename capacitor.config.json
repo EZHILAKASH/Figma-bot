@@ -1,0 +1,6 @@
+{
+  "appId": "com.figmatocode.app",
+  "appName": "Figma to Code",
+  "webDir": "out",
+  "bundledWebRuntime": false
+}
