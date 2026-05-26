@@ -212,12 +212,7 @@ export default function UploadSection({ onImageSelected, onGenerate, isLoading, 
               disabled={isLoading}
               className="bg-transparent border-none text-[9.5px] font-extrabold text-violet-400 focus:outline-none cursor-pointer pr-1 transition-colors hover:text-violet-300 max-w-[100px] truncate"
             >
-              <option value="gemini-2.0-flash" className="bg-[#0c0d14] text-white">⚡ Gemini 2.0 Flash</option>
-              <option value="gemini-1.5-flash" className="bg-[#0c0d14] text-white">⚡ Gemini 1.5 Flash</option>
-              <option value="gemini-1.5-pro" className="bg-[#0c0d14] text-white">🧠 Gemini 1.5 Pro</option>
-              <option value="gemini-2.0-flash-lite-preview-02-05" className="bg-[#0c0d14] text-white">⚡ Gemini 2.0 Lite</option>
-              <option value="claude-3-5-sonnet" className="bg-[#0c0d14] text-white">🔮 Claude Sonnet</option>
-              <option value="claude-3-5-haiku" className="bg-[#0c0d14] text-white">🔮 Claude Haiku</option>
+              <option value="gemini-2.5-flash" className="bg-[#0c0d14] text-white">⚡ Gemini 2.5 Flash</option>
             </select>
 
             <div className="w-[1px] h-4 bg-white/10" />

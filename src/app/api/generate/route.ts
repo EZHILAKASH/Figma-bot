@@ -133,7 +133,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const finalModel = requestedModel || 'gemini-2.0-flash';
+    const finalModel = requestedModel || 'gemini-2.5-flash';
     let contentText = '';
 
     // Parse base64 image data and determine media type (if image is present)
@@ -261,20 +261,8 @@ export async function POST(req: Request) {
         );
       }
 
-      // List of fallback models to try if primary model fails with 503
-      const geminiModelsToTry = [finalModel];
-      if (finalModel === 'gemini-2.0-flash') {
-        geminiModelsToTry.push('gemini-1.5-flash', 'gemini-2.0-flash-lite-preview-02-05', 'gemini-1.5-pro');
-      } else if (finalModel === 'gemini-2.0-flash-lite-preview-02-05') {
-        geminiModelsToTry.push('gemini-2.0-flash', 'gemini-1.5-flash');
-      } else if (finalModel === 'gemini-1.5-flash') {
-        geminiModelsToTry.push('gemini-2.0-flash', 'gemini-1.5-pro');
-      } else if (finalModel === 'gemini-1.5-pro') {
-        geminiModelsToTry.push('gemini-2.0-flash', 'gemini-1.5-flash');
-      } else {
-        // Safe standard fallback stack for any newer or custom selected models
-        geminiModelsToTry.push('gemini-2.0-flash', 'gemini-1.5-flash');
-      }
+      // Only use the requested gemini-2.5-flash model as requested by the user
+      const geminiModelsToTry = ['gemini-2.5-flash'];
 
       let geminiError: any = null;
       let success = false;
