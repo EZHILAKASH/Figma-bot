@@ -92,17 +92,25 @@ ${activeCode}
     } else {
       // Gemini Routing Channel with 503 fallbacks
       const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) {
+      // Collect all configured Gemini API keys for seamless rollover / redundancy
+      const apiKeys = [
+        process.env.GEMINI_API_KEY,
+        process.env.GEMINI_API_KEY_2,
+        process.env.GEMINI_API_KEY_3,
+        process.env.GEMINI_API_KEY_4,
+        process.env.GEMINI_API_KEY_5,
+      ].filter(Boolean) as string[];
+
+      if (apiKeys.length === 0) {
         return NextResponse.json(
           {
             success: false,
-            error: 'Gemini API key is not configured. Please add GEMINI_API_KEY to your .env.local file.',
+            error: 'No Gemini API keys are configured. Please add GEMINI_API_KEY to your .env.local file.',
           },
           { status: 500 }
         );
       }
 
-      const genAI = new GoogleGenerativeAI(apiKey);
       const geminiModelsToTry = [finalModel];
       
       if (finalModel === 'gemini-2.0-flash') {
@@ -119,36 +127,55 @@ ${activeCode}
       }
 
       let geminiError: any = null;
-      for (const currentGeminiModel of geminiModelsToTry) {
-        try {
-          console.log(`[Chat API] Attempting generation with Gemini model: ${currentGeminiModel}`);
-          const model = genAI.getGenerativeModel({
-            model: currentGeminiModel,
-            systemInstruction: systemPrompt,
-          });
+      let success = false;
 
-          // Convert history format to Gemini format
-          // Gemini expects: history = [{ role: 'user'|'model', parts: [{ text: string }] }]
-          const history = activeMessages.slice(0, -1).map((msg: any) => ({
-            role: msg.role === 'assistant' ? 'model' : 'user',
-            parts: [{ text: msg.content }],
-          }));
-          const lastMessage = activeMessages[activeMessages.length - 1].content;
+      for (let keyIndex = 0; keyIndex < apiKeys.length; keyIndex++) {
+        const apiKey = apiKeys[keyIndex];
+        const genAI = new GoogleGenerativeAI(apiKey);
 
-          const chat = model.startChat({ history });
-          const result = await chat.sendMessage(lastMessage);
-          
-          replyText = result.response.text();
-          geminiError = null;
-          console.log(`[Chat API] Successfully got chat response using Gemini: ${currentGeminiModel}`);
-          break; // Success! Exit fallback loop
-        } catch (err: any) {
-          console.warn(`[Chat API] Gemini model ${currentGeminiModel} failed:`, err);
-          geminiError = err;
+        for (const currentGeminiModel of geminiModelsToTry) {
+          try {
+            console.log(`[Chat API] Attempting generation with Gemini model: ${currentGeminiModel} (Key Index: ${keyIndex})`);
+            const model = genAI.getGenerativeModel({
+              model: currentGeminiModel,
+              systemInstruction: systemPrompt,
+            });
+
+            // Convert history format to Gemini format
+            // Gemini expects: history = [{ role: 'user'|'model', parts: [{ text: string }] }]
+            const history = activeMessages.slice(0, -1).map((msg: any) => ({
+              role: msg.role === 'assistant' ? 'model' : 'user',
+              parts: [{ text: msg.content }],
+            }));
+            const lastMessage = activeMessages[activeMessages.length - 1].content;
+
+            const chat = model.startChat({ history });
+            const result = await chat.sendMessage(lastMessage);
+            
+            replyText = result.response.text();
+            geminiError = null;
+            success = true;
+            console.log(`[Chat API] Successfully got chat response using Gemini: ${currentGeminiModel} (Key Index: ${keyIndex})`);
+            break; // Success! Exit model loop
+          } catch (err: any) {
+            const errMessage = err.message || JSON.stringify(err);
+            console.warn(`[Chat API] Gemini model ${currentGeminiModel} failed with Key Index ${keyIndex}:`, errMessage);
+            geminiError = err;
+
+            // If the error is key-specific (expired or invalid), roll over to the next key immediately
+            if (errMessage.includes('API key expired') || errMessage.includes('API_KEY_INVALID') || errMessage.includes('API key not found')) {
+              console.warn(`[Chat API] API key index ${keyIndex} is expired or invalid. Rolling over to next available key...`);
+              break; // Break model fallback loop to try next key in the outer loop
+            }
+          }
+        }
+
+        if (success) {
+          break; // Success! Exit key rotation loop
         }
       }
 
-      if (geminiError) {
+      if (!success && geminiError) {
         throw geminiError;
       }
     }

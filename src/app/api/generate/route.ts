@@ -242,19 +242,24 @@ export async function POST(req: Request) {
 
       contentText = responseData?.content?.[0]?.text || '';
     } else {
-      // Gemini Model execution with robust 503 fallback layers
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) {
+      // Collect all configured Gemini API keys for seamless rollover / redundancy
+      const apiKeys = [
+        process.env.GEMINI_API_KEY,
+        process.env.GEMINI_API_KEY_2,
+        process.env.GEMINI_API_KEY_3,
+        process.env.GEMINI_API_KEY_4,
+        process.env.GEMINI_API_KEY_5,
+      ].filter(Boolean) as string[];
+
+      if (apiKeys.length === 0) {
         return NextResponse.json(
           {
             success: false,
-            error: 'Gemini API key is not configured. Please add GEMINI_API_KEY to your .env.local file.',
+            error: 'No Gemini API keys are configured. Please add GEMINI_API_KEY to your .env.local file.',
           },
           { status: 500 }
         );
       }
-
-      const genAI = new GoogleGenerativeAI(apiKey);
 
       // List of fallback models to try if primary model fails with 503
       const geminiModelsToTry = [finalModel];
@@ -272,34 +277,52 @@ export async function POST(req: Request) {
       }
 
       let geminiError: any = null;
-      for (const currentGeminiModel of geminiModelsToTry) {
-        try {
-          console.log(`Attempting generation with Gemini model: ${currentGeminiModel}`);
-          const model = genAI.getGenerativeModel({ model: currentGeminiModel });
-          
-          const promptParts: any[] = [promptText];
-          if (image) {
-            promptParts.push({
-              inlineData: {
-                data: base64Data,
-                mimeType: mediaType,
-              },
-            });
-          }
+      let success = false;
 
-          const result = await model.generateContent(promptParts);
-          contentText = result.response.text();
-          geminiError = null;
-          console.log(`Successfully generated using Gemini: ${currentGeminiModel}`);
-          break; // Success! Exit fallback loop
-        } catch (err: any) {
-          console.warn(`Gemini model ${currentGeminiModel} failed:`, err);
-          geminiError = err;
-          // Continue to next fallback model
+      for (let keyIndex = 0; keyIndex < apiKeys.length; keyIndex++) {
+        const apiKey = apiKeys[keyIndex];
+        const genAI = new GoogleGenerativeAI(apiKey);
+
+        for (const currentGeminiModel of geminiModelsToTry) {
+          try {
+            console.log(`[API Generate] Attempting generation with Gemini model: ${currentGeminiModel} (Key Index: ${keyIndex})`);
+            const model = genAI.getGenerativeModel({ model: currentGeminiModel });
+            
+            const promptParts: any[] = [promptText];
+            if (image) {
+              promptParts.push({
+                inlineData: {
+                  data: base64Data,
+                  mimeType: mediaType,
+                },
+              });
+            }
+
+            const result = await model.generateContent(promptParts);
+            contentText = result.response.text();
+            geminiError = null;
+            success = true;
+            console.log(`[API Generate] Successfully generated using Gemini: ${currentGeminiModel} (Key Index: ${keyIndex})`);
+            break; // Success! Exit model loop
+          } catch (err: any) {
+            const errMessage = err.message || JSON.stringify(err);
+            console.warn(`[API Generate] Gemini model ${currentGeminiModel} failed with Key Index ${keyIndex}:`, errMessage);
+            geminiError = err;
+
+            // If the error is key-specific (expired or invalid), roll over to the next key immediately
+            if (errMessage.includes('API key expired') || errMessage.includes('API_KEY_INVALID') || errMessage.includes('API key not found')) {
+              console.warn(`[API Generate] API key index ${keyIndex} is expired or invalid. Rolling over to next available key...`);
+              break; // Break model fallback loop to try next key in the outer loop
+            }
+          }
+        }
+
+        if (success) {
+          break; // Success! Exit key rotation loop
         }
       }
 
-      if (geminiError) {
+      if (!success && geminiError) {
         throw geminiError;
       }
     }
