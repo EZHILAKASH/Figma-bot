@@ -142,16 +142,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const code = String(reason?.code || '');
 
       if (code.indexOf('auth/') === 0 || message.indexOf('auth/') !== -1) {
-        console.warn("Gracefully intercepted unhandled Firebase rejection:", reason);
+        console.warn("Gracefully intercepted background/unhandled Firebase Auth rejection:", reason);
         event.preventDefault();
-        
-        // Skip blocking modal if user previously chose to bypass
-        if (typeof window !== 'undefined' && window.localStorage.getItem('bypassFirebaseDiagnostics') === 'true') {
-          return;
-        }
-
-        const diagErr = getDiagnosticDetails(reason);
-        setDiagnosticError(diagErr);
+        // Background and unhandled rejections are logged to console but do not trigger a blocking UI modal
       }
     };
 
@@ -161,16 +154,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const code = String(error?.code || '');
 
       if (code.indexOf('auth/') === 0 || message.indexOf('auth/') !== -1) {
-        console.warn("Gracefully intercepted global Firebase error:", error);
+        console.warn("Gracefully intercepted background/global Firebase Auth error:", error);
         event.preventDefault();
-        
-        // Skip blocking modal if user previously chose to bypass
-        if (typeof window !== 'undefined' && window.localStorage.getItem('bypassFirebaseDiagnostics') === 'true') {
-          return;
-        }
-
-        const diagErr = getDiagnosticDetails(error || event);
-        setDiagnosticError(diagErr);
+        // Global auth errors are logged to console but do not trigger a blocking UI modal
       }
     };
 
@@ -199,14 +185,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       (error) => {
         console.warn("Background Firebase auth verification intercepted:", error.message);
         setLoading(false);
-        
-        // Skip blocking modal if user previously chose to bypass
-        if (typeof window !== 'undefined' && window.localStorage.getItem('bypassFirebaseDiagnostics') === 'true') {
-          return;
-        }
-
-        const diagErr = getDiagnosticDetails(error);
-        setDiagnosticError(diagErr);
+        // Background session verification failures are logged to console but do not trigger a blocking UI modal
       }
     );
 
