@@ -30,8 +30,23 @@ interface DiagnosticError {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(!!auth);
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window !== 'undefined' && window.localStorage.getItem('useGuestMode') === 'true') {
+      return {
+        uid: 'developer-guest-uid',
+        displayName: 'Guest Developer',
+        email: 'guest@frameflow.dev',
+        photoURL: null
+      } as unknown as User;
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined' && window.localStorage.getItem('useGuestMode') === 'true') {
+      return false;
+    }
+    return !!auth;
+  });
   const [diagnosticError, setDiagnosticError] = useState<DiagnosticError | null>(null);
   const [isSimulatingAuth, setIsSimulatingAuth] = useState(false);
 
@@ -129,6 +144,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (code.indexOf('auth/') === 0 || message.indexOf('auth/') !== -1) {
         console.warn("Gracefully intercepted unhandled Firebase rejection:", reason);
         event.preventDefault();
+        
+        // Skip blocking modal if user previously chose to bypass
+        if (typeof window !== 'undefined' && window.localStorage.getItem('bypassFirebaseDiagnostics') === 'true') {
+          return;
+        }
+
         const diagErr = getDiagnosticDetails(reason);
         setDiagnosticError(diagErr);
       }
@@ -142,6 +163,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (code.indexOf('auth/') === 0 || message.indexOf('auth/') !== -1) {
         console.warn("Gracefully intercepted global Firebase error:", error);
         event.preventDefault();
+        
+        // Skip blocking modal if user previously chose to bypass
+        if (typeof window !== 'undefined' && window.localStorage.getItem('bypassFirebaseDiagnostics') === 'true') {
+          return;
+        }
+
         const diagErr = getDiagnosticDetails(error || event);
         setDiagnosticError(diagErr);
       }
@@ -149,6 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     window.addEventListener('unhandledrejection', handleUnhandledRejection);
     window.addEventListener('error', handleGlobalError);
+
 
     if (!auth) {
       return () => {
@@ -160,12 +188,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(
       auth, 
       (firebaseUser) => {
+        // Skip Firebase state sync if we are explicitly using Guest Mode
+        if (typeof window !== 'undefined' && window.localStorage.getItem('useGuestMode') === 'true') {
+          setLoading(false);
+          return;
+        }
         setUser(firebaseUser);
         setLoading(false);
       },
       (error) => {
         console.warn("Background Firebase auth verification intercepted:", error.message);
         setLoading(false);
+        
+        // Skip blocking modal if user previously chose to bypass
+        if (typeof window !== 'undefined' && window.localStorage.getItem('bypassFirebaseDiagnostics') === 'true') {
+          return;
+        }
+
         const diagErr = getDiagnosticDetails(error);
         setDiagnosticError(diagErr);
       }
@@ -179,6 +218,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
+    // Clear guest / bypass flags on explicit sign in attempt
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('useGuestMode');
+      window.localStorage.removeItem('bypassFirebaseDiagnostics');
+    }
+
     if (!isFirebaseConfigured || !auth) {
       console.warn("Firebase config missing or invalid. Falling back to simulated Google authentication.");
       await simulateGoogleSignIn();
@@ -213,6 +258,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
+    // Clear guest and bypass flags on sign out
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('useGuestMode');
+      window.localStorage.removeItem('bypassFirebaseDiagnostics');
+    }
+    setUser(null);
     if (!auth) return;
     try {
       await signOut(auth);
@@ -231,6 +282,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } as unknown as User;
     setUser(mockUser);
     setDiagnosticError(null);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('useGuestMode', 'true');
+      window.localStorage.setItem('bypassFirebaseDiagnostics', 'true');
+    }
   };
 
   const getSolutionIcon = (type: string) => {
@@ -299,7 +354,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
           <div 
             className="fixed inset-0 cursor-pointer" 
-            onClick={() => setDiagnosticError(null)} 
+            onClick={() => {
+              setDiagnosticError(null);
+              if (typeof window !== 'undefined') {
+                window.localStorage.setItem('bypassFirebaseDiagnostics', 'true');
+              }
+            }} 
           />
           <div className="relative bg-[#0c0d14]/90 border border-white/[0.08] shadow-[0_0_50px_-12px_rgba(139,92,246,0.15)] backdrop-blur-xl max-w-xl w-full rounded-2xl p-6 overflow-hidden animate-fade-in z-50">
             {/* Visual Top Highlight */}
@@ -307,12 +367,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             
             {/* Close Button */}
             <button
-              onClick={() => setDiagnosticError(null)}
+              onClick={() => {
+                setDiagnosticError(null);
+                if (typeof window !== 'undefined') {
+                  window.localStorage.setItem('bypassFirebaseDiagnostics', 'true');
+                }
+              }}
               className="absolute top-4 right-4 text-white/40 hover:text-white/80 p-1.5 rounded-lg border border-white/[0.08] hover:bg-white/[0.05] transition-all cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
-
+ 
             {/* Header / Title */}
             <div className="flex items-start space-x-4 mb-5">
               <div className="flex-shrink-0 flex items-center justify-center w-14 h-14 rounded-xl bg-white/[0.03] border border-white/[0.06]">
@@ -327,14 +392,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 </div>
               </div>
             </div>
-
+ 
             {/* Description */}
             <div className="px-1 py-3 border-t border-b border-white/[0.06] mb-5">
               <p className="text-xs text-white/70 leading-relaxed font-medium">
                 {diagnosticError.message}
               </p>
             </div>
-
+ 
             {/* Steps checklist */}
             <div className="space-y-3.5 mb-6">
               <p className="text-xs font-bold text-violet-300 tracking-wide uppercase">Steps to Resolve:</p>
@@ -368,7 +433,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 })}
               </ol>
             </div>
-
+ 
             {/* Dismiss / Bypass CTA Actions */}
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full mt-4">
               <button
@@ -378,7 +443,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 <span>Bypass & Proceed as Guest</span>
               </button>
               <button
-                onClick={() => setDiagnosticError(null)}
+                onClick={() => {
+                  setDiagnosticError(null);
+                  if (typeof window !== 'undefined') {
+                    window.localStorage.setItem('bypassFirebaseDiagnostics', 'true');
+                  }
+                }}
                 className="w-full sm:flex-1 flex items-center justify-center py-2.5 px-4 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-bold text-white/85 hover:text-white transition-all cursor-pointer active:scale-98"
               >
                 <span>Dismiss Diagnostics</span>

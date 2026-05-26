@@ -13,6 +13,7 @@ const firebaseConfig = {
 
 // Check if credentials are fully configured and not placeholder values
 const isFirebaseConfigured = 
+  process.env.NEXT_PUBLIC_USE_MOCK_AUTH !== 'true' &&
   !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY && 
   process.env.NEXT_PUBLIC_FIREBASE_API_KEY !== 'your-api-key' &&
   !process.env.NEXT_PUBLIC_FIREBASE_API_KEY.startsWith('AIzaSy...'); // checking against templates
