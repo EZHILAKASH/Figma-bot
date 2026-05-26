@@ -212,7 +212,10 @@ export default function UploadSection({ onImageSelected, onGenerate, isLoading, 
               disabled={isLoading}
               className="bg-transparent border-none text-[9.5px] font-extrabold text-violet-400 focus:outline-none cursor-pointer pr-1 transition-colors hover:text-violet-300 max-w-[100px] truncate"
             >
-              <option value="gemini-2.5-flash" className="bg-[#0c0d14] text-white">⚡ Gemini 2.5 Flash</option>
+              <option value="gemini-3.5-flash" className="bg-[#0c0d14] text-white">🚀 Gemini 3.5 Flash (Latest)</option>
+              <option value="gemini-3.1-pro" className="bg-[#0c0d14] text-white">🧠 Gemini 3.1 Pro</option>
+              <option value="gemini-2.5-flash" className="bg-[#0c0d14] text-white">⚡ Gemini 2.5 Flash (Free)</option>
+              <option value="gemini-2.5-pro" className="bg-[#0c0d14] text-white">🧠 Gemini 2.5 Pro (Free)</option>
             </select>
 
             <div className="w-[1px] h-4 bg-white/10" />

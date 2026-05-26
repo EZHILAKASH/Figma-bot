@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       activeMessages.shift();
     }
 
-    const finalModel = requestedModel || 'gemini-2.5-flash';
+    const finalModel = requestedModel || 'gemini-3.5-flash';
     const activeCode = code || '';
 
     // System instruction defining chatbot's role, rules, and presenting the sandbox code context
@@ -90,16 +90,23 @@ ${activeCode}
 
       replyText = responseData?.content?.[0]?.text || '';
     } else {
-      // Gemini Routing Channel with 503 fallbacks
-      const apiKey = process.env.GEMINI_API_KEY;
-      // Collect all configured Gemini API keys for seamless rollover / redundancy
-      const apiKeys = [
-        process.env.GEMINI_API_KEY,
-        process.env.GEMINI_API_KEY_2,
-        process.env.GEMINI_API_KEY_3,
-        process.env.GEMINI_API_KEY_4,
-        process.env.GEMINI_API_KEY_5,
-      ].filter(Boolean) as string[];
+      // Collect all configured Gemini API keys dynamically (handles GEMINI_API_KEY, GEMINI_API_KEY_2, etc., supporting an infinite number of keys!)
+      const apiKeys: string[] = [];
+      if (process.env.GEMINI_API_KEY) {
+        apiKeys.push(process.env.GEMINI_API_KEY);
+      }
+      
+      const additionalKeys = Object.keys(process.env)
+        .filter(key => key.startsWith('GEMINI_API_KEY_'))
+        .sort((a, b) => {
+          const numA = parseInt(a.replace('GEMINI_API_KEY_', ''), 10);
+          const numB = parseInt(b.replace('GEMINI_API_KEY_', ''), 10);
+          return numA - numB;
+        })
+        .map(key => process.env[key])
+        .filter(Boolean) as string[];
+      
+      apiKeys.push(...additionalKeys);
 
       if (apiKeys.length === 0) {
         return NextResponse.json(
@@ -111,8 +118,19 @@ ${activeCode}
         );
       }
 
-      // Only use the requested gemini-2.5-flash model as requested by the user
-      const geminiModelsToTry = ['gemini-2.5-flash'];
+      // Smart fallback chain across all available Gemini models
+      const geminiModelsToTry = [finalModel];
+      if (finalModel === 'gemini-3.5-flash') {
+        geminiModelsToTry.push('gemini-3.1-pro', 'gemini-2.5-flash', 'gemini-2.5-pro');
+      } else if (finalModel === 'gemini-3.1-pro') {
+        geminiModelsToTry.push('gemini-3.5-flash', 'gemini-2.5-pro', 'gemini-2.5-flash');
+      } else if (finalModel === 'gemini-2.5-flash') {
+        geminiModelsToTry.push('gemini-2.5-pro', 'gemini-3.5-flash');
+      } else if (finalModel === 'gemini-2.5-pro') {
+        geminiModelsToTry.push('gemini-2.5-flash', 'gemini-3.5-flash');
+      } else {
+        geminiModelsToTry.push('gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.5-pro');
+      }
 
       let geminiError: any = null;
       let success = false;
