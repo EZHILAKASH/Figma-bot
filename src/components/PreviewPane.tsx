@@ -192,7 +192,7 @@ export default function PreviewPane({ code }: PreviewPaneProps) {
               
               // Transpiling TypeScript / JSX using Babel Standalone
               const compiled = Babel.transform(codeString, {
-                presets: ['react', 'typescript'],
+                presets: ['env', 'react', 'typescript'],
                 filename: 'component.tsx'
               }).code;
               
