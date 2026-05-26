@@ -12,6 +12,13 @@ export async function POST(req: Request) {
       );
     }
 
+    // Filter out the static welcome message if the conversation starts with an assistant greeting,
+    // since both Gemini startChat and Claude Messages API strictly require the first message to be from 'user'.
+    let activeMessages = [...messages];
+    if (activeMessages.length > 0 && activeMessages[0].role === 'assistant') {
+      activeMessages.shift();
+    }
+
     const finalModel = requestedModel || 'gemini-2.5-flash';
     const activeCode = code || '';
 
@@ -68,7 +75,7 @@ ${activeCode}
           model: claudeModelId,
           max_tokens: 4096,
           system: systemPrompt,
-          messages: messages.map((msg: any) => ({
+          messages: activeMessages.map((msg: any) => ({
             role: msg.role === 'assistant' ? 'assistant' : 'user',
             content: msg.content,
           })),
@@ -114,11 +121,11 @@ ${activeCode}
 
           // Convert history format to Gemini format
           // Gemini expects: history = [{ role: 'user'|'model', parts: [{ text: string }] }]
-          const history = messages.slice(0, -1).map((msg: any) => ({
+          const history = activeMessages.slice(0, -1).map((msg: any) => ({
             role: msg.role === 'assistant' ? 'model' : 'user',
             parts: [{ text: msg.content }],
           }));
-          const lastMessage = messages[messages.length - 1].content;
+          const lastMessage = activeMessages[activeMessages.length - 1].content;
 
           const chat = model.startChat({ history });
           const result = await chat.sendMessage(lastMessage);
